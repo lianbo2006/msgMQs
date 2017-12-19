@@ -30,10 +30,13 @@ class cvBridgeDemo():
         # Create the cv_bridge object
         self.bridge = CvBridge()
 
+        # add a number to record the frame order
+        self.image_num = 0
+
         # Subscribe to the camera image and depth topics and set
         # the appropriate callbacks
         self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback, queue_size=1)
-        self.depth_sub = rospy.Subscriber("/camera/depth/image_raw", Image, self.depth_callback, queue_size=1)
+        # self.depth_sub = rospy.Subscriber("/camera/depth/image_raw", Image, self.depth_callback, queue_size=1)
 
         rospy.loginfo("Waiting for image topics...")
         rospy.wait_for_message("/camera/rgb/image_raw", Image)
@@ -43,7 +46,8 @@ class cvBridgeDemo():
         # Use cv_bridge() to convert the ROS image to OpenCV format
         try:
             frame = self.bridge.imgmsg_to_cv2(ros_image, "bgr8")
-            rospy.loginfo("I got a rgb frame at" + " %s" %rospy.get_time())
+            self.image_num += 1
+            rospy.loginfo("I got {:0>4d} rgb frame at".format(self.image_num) + " %s" %rospy.get_time())
         except CvBridgeError, e:
             print e
 
