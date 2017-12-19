@@ -33,6 +33,11 @@ class cvBridgeDemo():
         # add a number to record the frame order
         self.image_num = 0
 
+        # add time flag
+        self.first_frame_time = 0.0
+        self.last_frame_time = 0.0
+        self.run_time = 0.0
+
         # Subscribe to the camera image and depth topics and set
         # the appropriate callbacks
         self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback, queue_size=1)
@@ -46,8 +51,20 @@ class cvBridgeDemo():
         # Use cv_bridge() to convert the ROS image to OpenCV format
         try:
             frame = self.bridge.imgmsg_to_cv2(ros_image, "bgr8")
+            frame_time = rospy.get_time()
             self.image_num += 1
-            rospy.loginfo("I got {:0>4d} rgb frame at".format(self.image_num) + " %s" %rospy.get_time())
+            rospy.loginfo("I got {:0>4d} rgb frame at".format(self.image_num) + " %s" %frame_time)
+            if self.image_num == 1:
+                self.first_frame_time = frame_time
+            elif self.image_num == 120:
+                self.last_frame_time = frame_time
+                self.run_time = float(self.last_frame_time) - float(self.first_frame_time)
+                print("run time is {:.4f} s".format(self.run_time))
+                rospy.signal_shutdown("ROSPy Shutdown")
+
+
+
+
         except CvBridgeError, e:
             print e
 
