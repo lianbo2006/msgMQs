@@ -23,11 +23,14 @@ def process_array(array):
     delay_std = np.std(array)
     # variance
     delay_var = np.var(array)
-    plt.plot(array*1000, "b.", avg_array*1000, "m-")
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    frame_delay_plot = ax.plot(array*1000, "b.", label='frame_delay')
+    delay_avg_plot = ax.plot(avg_array*1000, "r-", label='delay_avg')
+    ax.legend(loc='upper right')
     plt.xlabel("frame")
     plt.ylabel("delay/ms")
     plt.savefig('delay_fig', dpi=600)
-
     pass
 
 
