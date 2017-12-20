@@ -36,16 +36,20 @@ class cvBridgeDemo():
         # add time flag
         self.first_frame_time = 0.0
         self.last_frame_time = 0.0
-        self.run_time = 0.0
+        self.final_frame_time = 0.0
+        self.receive_time = 0.0
+
+        # add frame delay list
+        self.frame_delay_list = []
 
         # Subscribe to the camera image and depth topics and set
         # the appropriate callbacks
         self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback, queue_size=1)
         # self.depth_sub = rospy.Subscriber("/camera/depth/image_raw", Image, self.depth_callback, queue_size=1)
 
-        rospy.loginfo("Waiting for image topics...")
-        rospy.wait_for_message("/camera/rgb/image_raw", Image)
-        rospy.loginfo("Ready.")
+        # rospy.loginfo("Waiting for image topics...")
+        # rospy.wait_for_message("/camera/rgb/image_raw", Image)
+        # rospy.loginfo("Ready.")
 
     def image_callback(self, ros_image):
         # Use cv_bridge() to convert the ROS image to OpenCV format
@@ -56,21 +60,27 @@ class cvBridgeDemo():
             rospy.loginfo("I got {:0>4d} rgb frame at".format(self.image_num) + " %s" %frame_time)
             if self.image_num == 1:
                 self.first_frame_time = frame_time
-            elif self.image_num == 120:
                 self.last_frame_time = frame_time
-                self.run_time = float(self.last_frame_time) - float(self.first_frame_time)
-                print("run time is {:.4f} s".format(self.run_time))
+            elif self.image_num == 120:
+                self.final_frame_time = frame_time
+                self.frame_delay_list.append(float(frame_time) - float(self.last_frame_time))
+                self.last_frame_time = frame_time
+                self.receive_time = float(self.last_frame_time) - float(self.first_frame_time)
+                # print(len(self.frame_delay_list))
+                # print(self.frame_delay_list)
+                rospy.loginfo("recive time is {:.4f} s".format(self.receive_time))
+                self.write_delay_in_file()
                 rospy.signal_shutdown("ROSPy Shutdown")
-
-
-
+            else:
+                self.frame_delay_list.append(float(frame_time)-float(self.last_frame_time))
+                self.last_frame_time = frame_time
 
         except CvBridgeError, e:
             print e
 
-        # Convert the image to a numpy array since most cv2 functions
-        # require numpy arrays.
-        frame = np.array(frame, dtype=np.uint8)
+        # # Convert the image to a numpy array since most cv2 functions
+        # # require numpy arrays.
+        # frame = np.array(frame, dtype=np.uint8)
 
         # # Process the frame using the process_image() function
         # display_image = self.process_image(frame)
@@ -95,11 +105,11 @@ class cvBridgeDemo():
         except CvBridgeError, e:
             print e
 
-        # Convert the depth image to a Numpy array since most cv2 functions require Numpy arrays.
-        depth_array = np.array(depth_image, dtype=np.float32)
+        # # Convert the depth image to a Numpy array since most cv2 functions require Numpy arrays.
+        # depth_array = np.array(depth_image, dtype=np.float32)
 
-        # Normalize the depth image to fall between 0 (black) and 1 (white)
-        cv2.normalize(depth_array, depth_array, 0, 1, cv2.NORM_MINMAX)
+        # # Normalize the depth image to fall between 0 (black) and 1 (white)
+        # cv2.normalize(depth_array, depth_array, 0, 1, cv2.NORM_MINMAX)
 
         # # Process the depth image
         # depth_display_image = self.process_depth_image(depth_array)
@@ -122,6 +132,13 @@ class cvBridgeDemo():
     def process_depth_image(self, frame):
         # Just return the raw image for this demo
         return frame
+
+    def write_delay_in_file(self):
+        outfile = open("delay_list.txt", "w")
+        outfile.write(str(self.frame_delay_list))
+        outfile.close()
+
+
 
     def cleanup(self):
         print "Shutting down vision node."
