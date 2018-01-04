@@ -7,7 +7,7 @@ connection = pika.BlockingConnection(pika.ConnectionParameters(
         host='localhost'))
 channel = connection.channel()
 
-channel.exchange_declare(exchange='logs',exchange_type='fanout') #声明交换机
+channel.exchange_declare(exchange='logs',exchange_type='fanout') #声明交换机,注意在实际使用中发现type参数无法识别，改成了exchange_type，可能与pika版本有关
 
 result = channel.queue_declare(exclusive=True) #exclusive 排他的，自动生成的队列会唯一指定，这个queue在消费者断开后自动删除
                                                # 声明的这个queue去绑定交换机
