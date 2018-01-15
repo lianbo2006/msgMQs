@@ -3,7 +3,7 @@
 import rospy
 from std_msgs.msg import String
 import pika
-import sys
+
 
 class mqListener():
     def __init__(self):
